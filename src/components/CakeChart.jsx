@@ -1,7 +1,6 @@
 // http://codepen.io/maydie/details/OVmxZZ
 
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import getTextCoordinates from '../utils/getTextCoordinates';
 import createSliceTree from '../utils/createSliceTree';
@@ -121,7 +120,9 @@ export default class CakeChart extends Component {
     getKey: (node, key) => key
   };
 
-  state = { node: null };
+  state = { node: null, hovering: false };
+  labels = React.createRef();
+  container = React.createRef();
 
   componentWillMount() {
     attachRingSheets(this.props);
@@ -151,13 +152,17 @@ export default class CakeChart extends Component {
   debouncedWindowResize = throttle(this.handleWindowResize, 50);
 
   updateLabelsSize = () => {
-    const labelsEl = ReactDOM.findDOMNode(this.refs.labels);
-    const containerEl = this.container;
-    const size = Math.min(containerEl.offsetHeight, containerEl.offsetWidth);
-    labelsEl.style.height = size + 'px';
-    labelsEl.style.width = size + 'px';
+    const labelsEl = this.labels.current;
+    const containerEl = this.container.current;
+    if (this.labels && this.labels.current && this.container.current) {
+      const size = Math.min(containerEl.offsetHeight, containerEl.offsetWidth);
+      labelsEl.style.height = size + 'px';
+      labelsEl.style.width = size + 'px';
+    }
   };
 
+  handleStartHover = () => { this.setState({ hovering: true })};
+  handleEndHover = () => { this.setState({ hovering: false })};
   handleNodeHover = (node) => {
     this.setState({ node })
   };
@@ -181,13 +186,12 @@ export default class CakeChart extends Component {
     return (
       <div className={className}
            style={style}
-           ref={el => this.container = el}>
+           ref={this.container}>
         <div className={classes.labels}>
           <CSSTransitionGroup component='div'
                               className={classes.labelsTransition}
                               transitionName={labelTransitionName}
-                              transitionAppear={true}
-                              ref='labels'>
+                              transitionAppear={true}>
             {sliceTree.map((block, idx) =>
               this.renderTexts(block, center, `${idx}-${key}`)
             )}
@@ -235,6 +239,7 @@ export default class CakeChart extends Component {
             position: 'absolute',
             bottom: 0,
             left: 0,
+            zIndex: 1,
           }}>
             { node.label }: { node.value }
           </div>
@@ -248,7 +253,9 @@ export default class CakeChart extends Component {
 
     return (
       <div key={key}
-           className={ringSheet.classes['labels-' + block.level]}>{
+           style={{visibility: this.state.hovering ? 'hidden' : 'visible'}}
+           className={ringSheet.classes['labels-' + block.level]}
+           ref={this.labels}>{
         block.slices.map(slice =>
           <div {...getLabelProps(
             slice, block.slices.indexOf(slice),
