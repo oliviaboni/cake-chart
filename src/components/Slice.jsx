@@ -26,6 +26,8 @@ export default class Slice extends Component {
     strokeWidth: 3
   }
 
+  state = { hovering: false };
+
   drawPath () {
     const { angleRange, sliceRadiusRange } = this.props;
 
@@ -48,16 +50,52 @@ export default class Slice extends Component {
     ].join(' ');
   }
 
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16), // r
+        parseInt(result[2], 16), // g
+        parseInt(result[3], 16) // b
+    ] : null;
+  }
+
+  darkenColor(color) {
+    let rgb = color;
+    if (/^#[0-9A-F]{6}$/i.test(color)) {
+      rgb = this.hexToRgb(color) // convert hex colors
+    }
+
+    let new_rgb = rgb.map((col) => Math.round(parseFloat(col) - 20));
+    new_rgb.join(', ');
+    return `rgb(${ new_rgb})`;
+  }
+
   render () {
-    const { fill, stroke, strokeWidth, className } = this.props;
+    const { stroke, strokeWidth, className, node } = this.props;
+    const fill = this.state.hovering ? this.darkenColor(this.props.fill) : this.props.fill;
     return (
+      <g>
       <path d={this.drawPath()}
             onClick={this.handleClick}
+            onMouseEnter={this.handleStartHover}
+            onMouseLeave={this.handleEndHover}
             {...{ fill, stroke, strokeWidth, className }} />
+        <path>{node.value}</path>
+      </g>
     );
   }
 
   handleClick = () => {
     this.props.onClick && this.props.onClick(this.props.node);
   }
+
+  handleStartHover = () => {
+    this.setState({ hovering: true });
+    this.props.onHover && this.props.onHover(this.props.node);
+  };
+
+  handleEndHover = () => {
+    this.setState({ hovering: false });
+    this.props.onHover && this.props.onHover();
+  };
 }

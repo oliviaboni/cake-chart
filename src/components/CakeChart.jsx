@@ -121,6 +121,8 @@ export default class CakeChart extends Component {
     getKey: (node, key) => key
   };
 
+  state = { node: null };
+
   componentWillMount() {
     attachRingSheets(this.props);
   }
@@ -150,14 +152,19 @@ export default class CakeChart extends Component {
 
   updateLabelsSize = () => {
     const labelsEl = ReactDOM.findDOMNode(this.refs.labels);
-    const containerEl = ReactDOM.findDOMNode(this.refs.container);
+    const containerEl = this.container;
     const size = Math.min(containerEl.offsetHeight, containerEl.offsetWidth);
     labelsEl.style.height = size + 'px';
     labelsEl.style.width = size + 'px';
   };
 
+  handleNodeHover = (node) => {
+    this.setState({ node })
+  };
+
   render() {
     const { sheet: { classes } } = this.props;
+    const { node } = this.state;
     const { coreRadius, ringWidth, onClick, getRingProps, getSliceProps,
             style, data, getKey, stroke, strokeWidth, limit, ringWidthFactor,
             transitionName = classes.pieChart,
@@ -174,7 +181,7 @@ export default class CakeChart extends Component {
     return (
       <div className={className}
            style={style}
-           ref='container'>
+           ref={el => this.container = el}>
         <div className={classes.labels}>
           <CSSTransitionGroup component='div'
                               className={classes.labelsTransition}
@@ -192,7 +199,10 @@ export default class CakeChart extends Component {
              xmlns='http://www.w3.org/2000/svg'
              version='1.1'
              className={classes.svg}>
-          <g style={centerRule.style}>
+          <g style={centerRule.style}
+             onMouseEnter={this.handleStartHover}
+             onMouseLeave={this.handleEndHover}
+          >
             <CSSTransitionGroup component={'g'}
                                 transitionName={transitionName}
                                 transitionAppear={true}>
@@ -209,12 +219,26 @@ export default class CakeChart extends Component {
                     ringWidthFactor
                   ),
                   center, getSliceProps,
-                  stroke, strokeWidth, onClick
+                  stroke, strokeWidth, onClick,
+                  onHover: this.handleNodeHover
                 })} />
               )}
             </CSSTransitionGroup>
           </g>
         </svg>
+        { node &&
+          <div style={{
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            padding: 10,
+            display: 'inline-block',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+          }}>
+            { node.label }: { node.value }
+          </div>
+        }
       </div>
     );
   }

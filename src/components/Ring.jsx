@@ -36,7 +36,7 @@ export default class Ring extends Component {
 
   render() {
     const { slices, level, sliceRadiusRange, center, stroke, strokeWidth,
-            onClick, className, getSliceProps, sheet: { classes } } = this.props;
+            onClick, onHover, className, getSliceProps, sheet: { classes } } = this.props;
     const rectSize = sliceRadiusRange.end + 20;
     const hasChildren = s => s.node.children && s.node.children.length > 0;
 
@@ -56,7 +56,7 @@ export default class Ring extends Component {
               [classes.sliceActive]: hasChildren(slice),
               [classes.slice]: true
             }),
-            stroke, strokeWidth, sliceRadiusRange, onClick, level
+            stroke, strokeWidth, sliceRadiusRange, onClick, onHover, level
           })} />
         )}
       </g>
