@@ -1,4 +1,5 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import shouldPureComponentUpdate from 'react-pure-render/function';
 import Slice from './Slice';
 import getDefaultColor from '../utils/getDefaultColor';
@@ -50,7 +51,7 @@ export default class Ring extends Component {
             node: slice.node,
             angleRange: { start: slice.start, end: slice.end },
             percentValue: slice.percentValue.toFixed(1),
-            fill: getDefaultColor(level, idx),
+            fill: slice.node.color || getDefaultColor(level, idx),
             className: classNames({
               [classes.sliceActive]: hasChildren(slice),
               [classes.slice]: true

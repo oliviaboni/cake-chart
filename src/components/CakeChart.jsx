@@ -1,12 +1,14 @@
 // http://codepen.io/maydie/details/OVmxZZ
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 import getTextCoordinates from '../utils/getTextCoordinates';
 import createSliceTree from '../utils/createSliceTree';
 import Ring from './Ring';
 import jss from 'jss';
 import JssVendorPrefixer from 'jss-vendor-prefixer';
-import CSSTransitionGroup from 'react/lib/ReactCSSTransitionGroup';
+import CSSTransitionGroup from 'react-addons-css-transition-group';
 import getSliceRadiusRange from '../utils/getSliceRadiusRange';
 import getDefaultColor from '../utils/getDefaultColor';
 import classNames from 'classnames';
@@ -60,17 +62,20 @@ function getDefaultLabelProps(slice, idx, center, props, classes) {
     [classes.labelActive]: hasChildren
   });
   const label = getDefaultLabel(slice);
+  const onClick = props.onClick
+    ? () => { props.onClick(null, slice.node) }
+    : null;
 
   return {
     className,
     style: {
       left: pos.x + '%',
       top: pos.y + '%',
-      background: getDefaultColor(slice.level, idx),
+      background: slice.node.color || getDefaultColor(slice.level, idx),
       display: label ? 'block' : 'none'
     },
     key: slice.level + '-' + idx,
-    onClick: props.onClick.bind(null, slice.node)
+    onClick: onClick,
   }
 }
 
@@ -100,19 +105,21 @@ export default class CakeChart extends Component {
     labelTransitionName: PropTypes.string,
     className: PropTypes.string,
     getLabelComponent: PropTypes.func
-  }
+  };
 
   static defaultProps = {
     limit: 5,
     strokeWidth: 3,
     stroke: '#FFFFFF',
     ringWidthFactor: 0.7,
+    coreRadius: 100,
+    ringWidth: 200,
     getRingProps: (block, props) => props,
     getSliceProps: (slice, idx, props) => props,
     getLabelProps: (slice, idx, props) => props,
     getLabel: (slice, label) => label,
     getKey: (node, key) => key
-  }
+  };
 
   componentWillMount() {
     attachRingSheets(this.props);
@@ -137,17 +144,17 @@ export default class CakeChart extends Component {
 
   handleWindowResize = () => {
     window.requestAnimationFrame(this.updateLabelsSize);
-  }
+  };
 
-  debouncedWindowResize = throttle(this.handleWindowResize, 50)
+  debouncedWindowResize = throttle(this.handleWindowResize, 50);
 
   updateLabelsSize = () => {
-    const labelsEl = React.findDOMNode(this.refs.labels);
-    const containerEl = React.findDOMNode(this.refs.container);
+    const labelsEl = ReactDOM.findDOMNode(this.refs.labels);
+    const containerEl = ReactDOM.findDOMNode(this.refs.container);
     const size = Math.min(containerEl.offsetHeight, containerEl.offsetWidth);
     labelsEl.style.height = size + 'px';
     labelsEl.style.width = size + 'px';
-  }
+  };
 
   render() {
     const { sheet: { classes } } = this.props;
@@ -217,8 +224,8 @@ export default class CakeChart extends Component {
 
     return (
       <div key={key}
-           className={ringSheet.classes['labels-' + block.level]}>{[
-        for (slice of block.slices)
+           className={ringSheet.classes['labels-' + block.level]}>{
+        block.slices.map(slice =>
           <div {...getLabelProps(
             slice, block.slices.indexOf(slice),
             getDefaultLabelProps(
@@ -231,7 +238,8 @@ export default class CakeChart extends Component {
           )}>
             {getLabel(slice, getDefaultLabel(slice))}
           </div>
-      ]}
+        )
+      }
       </div>
     );
   }
